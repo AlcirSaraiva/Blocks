@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Blocks</string>
+    <string name="texture_loading_failed">Failed to load app textures</string>
+    <string name="ad_loading_failed">Failed to load ad</string>
+    <string name="ad_not_ready">Ad not ready</string>
+    <string name="adsAgreement">This is a free app. To be able to support myself and my family, I will show you some few ads. Those ads WILL NOT be based on your activities. You can change this in the app.\n\nHere you can read my privacy policy:\n\nhttps://onenice.monster/awesomerobot/?action=pp\n</string>
+    <string name="ads_settings">Personalized ads will use the data collected from you to show you ads targeted to your activities. Non personalized ads will show you generic ads.\n\nHere you can read my privacy policy:\n\nhttps://onenice.monster/awesomerobot/?action=pp\n</string>
+    <string name="NON_PERSONALIZED">Show me NON\npersonalized ads</string>
+    <string name="PERSONALIZED">Show me\npersonalized ads</string>
+    <string name="ok">Ok</string>
+    <string name="must_be_online">Must be online</string>
+</resources>

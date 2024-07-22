@@ -1,0 +1,5 @@
+<resources>
+    <dimen name="height32dp">32dp</dimen>
+    <dimen name="height50dp">50dp</dimen>
+    <dimen name="height90dp">90dp</dimen>
+</resources>
