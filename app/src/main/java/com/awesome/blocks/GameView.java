@@ -57,18 +57,6 @@ public class GameView extends View {
     private int menuTitleX, menuTitleY, menuTitleWidth, menuTitleHeight;
     private Paint menuScreenBlockPaint, menuScreenAnimBlockPaint, menuScreenAnimBlockPaint2;
     private int jj, jjDiv;
-    // ranking
-    private boolean rankingCapable = true, rankingDataAvailable = true;
-    private int rankingBGTopY, rankingBGBottomY;
-    private Paint rankingTitlePaint, rankingTop10Paint, rankingFirstRowPaint, ranking1stPaint, ranking2ndPaint, ranking3rdPaint, rankingPaint, rankingInfoPaint;
-    private boolean showsKeyboard = false, hidesKeyboard = false, rankingReadyForUpload = false;
-    private String name = "";
-    private String[] rankingName;
-    private int[] rankingLevel, rankingPoints;
-    private String updatedRanking = "";
-    private int lineSpace;
-    private boolean deleteConfirmation = false;
-    private int confButtonYesLeft, confButtonYesRight, confButtonNoLeft, confButtonNoRight, confButtonYesTop, confButtonYesBottom, confButtonNoTop, confButtonNoBottom;
     // levels
     private int levelsButtonSize, levelsButtonX;
     private Paint levelsButtonFillPaint, levelsButtonStrokePaint, levelsButtonTextPaint;
@@ -132,12 +120,6 @@ public class GameView extends View {
     private Paint levelTextPaint;
     private int levelTextY;
 
-    // TODO animations screens, icons, buttons, blocks
-
-    // TODO sound when rewarded
-
-    // TODO sound on events
-
     // initialization
 
     public GameView(Context ctx) {
@@ -175,14 +157,6 @@ public class GameView extends View {
                 } else {
                     info = context.getString(R.string.texture_loading_failed);
                 }
-                break;
-            case "preRanking":
-                preRankingScreen();
-                handlesPreRankingTouch();
-                break;
-            case "ranking":
-                rankingScreen();
-                handlesRankingTouch();
                 break;
             case "levels":
                 levelsScreen();
@@ -349,14 +323,6 @@ public class GameView extends View {
         menuScreenBlockPaint = new Paint();
         menuScreenAnimBlockPaint = new Paint();
         menuScreenAnimBlockPaint2 = new Paint();
-        rankingTitlePaint = new Paint();
-        rankingTop10Paint = new Paint();
-        rankingFirstRowPaint = new Paint();
-        ranking1stPaint = new Paint();
-        ranking2ndPaint = new Paint();
-        ranking3rdPaint = new Paint();
-        rankingPaint = new Paint();
-        rankingInfoPaint = new Paint();
         panelPaint = new Paint();
         typeface =Typeface.createFromAsset(context.getAssets(),"fonts/blocko.ttf");
         sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
@@ -386,44 +352,6 @@ public class GameView extends View {
         menuScreenAnimBlockPaint2.setStyle(Paint.Style.FILL);
         jj = 250;
         jjDiv = 300;
-        // ranking
-        rankingBGTopY = 6 * menuScreenBlockSize;
-        rankingBGBottomY = ((int)Math.floor((canvasHeight * 0.78f) / menuScreenBlockSize)) * menuScreenBlockSize;
-        lineSpace = (rankingBGBottomY - (8 * menuScreenBlockSize)) / 23;
-        rankingTitlePaint.setFakeBoldText(true);
-        rankingTitlePaint.setTextSize((int)(canvasWidth * 0.127f));
-        rankingTitlePaint.setTypeface(typeface);
-        rankingTitlePaint.setColor(gameBGColor);
-        rankingTop10Paint.setColor(0xff00ca3d);
-        rankingTop10Paint.setTextSize((int)(canvasWidth * 0.05f));
-        rankingTop10Paint.setTypeface(typeface);
-        rankingFirstRowPaint.setColor(0xffc1ba36);
-        rankingFirstRowPaint.setTextSize((int)(canvasWidth * 0.05f));
-        rankingFirstRowPaint.setTypeface(typeface);
-        ranking1stPaint.setColor(0xff02ff56);
-        ranking1stPaint.setTextSize((int)(canvasWidth * 0.05f));
-        ranking1stPaint.setTypeface(typeface);
-        ranking2ndPaint.setColor(0xff00e84b);
-        ranking2ndPaint.setTextSize((int)(canvasWidth * 0.05f));
-        ranking2ndPaint.setTypeface(typeface);
-        ranking3rdPaint.setColor(0xff03cb47);
-        ranking3rdPaint.setTextSize((int)(canvasWidth * 0.05f));
-        ranking3rdPaint.setTypeface(typeface);
-        rankingPaint.setColor(0xff00a736);
-        rankingPaint.setTextSize((int)(canvasWidth * 0.05f));
-        rankingPaint.setTypeface(typeface);
-        rankingInfoPaint.setColor(gameBGColor);
-        rankingInfoPaint.setTextSize((int)(canvasWidth * 0.05f));
-        rankingInfoPaint.setTypeface(typeface);
-        name = sharedPref.getString("name", "");
-        confButtonYesLeft = menuScreenBlockSize * 3;
-        confButtonYesRight = menuScreenBlockSize * 11;
-        confButtonNoLeft = menuScreenBlockSize * 13;
-        confButtonNoRight = menuScreenBlockSize * 21;
-        confButtonYesTop = rankingBGBottomY + (3 * menuScreenBlockSize);
-        confButtonYesBottom = rankingBGBottomY + (6 * menuScreenBlockSize);
-        confButtonNoTop = rankingBGBottomY + (3 * menuScreenBlockSize);
-        confButtonNoBottom = rankingBGBottomY + (6 * menuScreenBlockSize);
         // levels
         realNumberOfLevels = 80;
         numberOfLevels = realNumberOfLevels + 1;
@@ -1507,98 +1435,6 @@ public class GameView extends View {
         }, 1000);
     }
 
-    // ranking
-
-    public void checkRankingPosition() {
-        boolean rankingChanged = false;
-        if (rankingLevel != null) {
-            for (int ch = 0; ch < rankingLevel.length; ch ++) {
-                if ((unlockedLevel == rankingLevel[ch] && totalPoints > rankingPoints[ch]) || unlockedLevel > rankingLevel[ch]) {
-                    rankingChanged = true;
-                    addInRanking(ch);
-                    ch = rankingLevel.length; // exits the loop
-                } else if (unlockedLevel == rankingLevel[ch] && totalPoints == rankingPoints[ch] && !name.equals(rankingName[ch])) {
-                    rankingChanged = true;
-                    addInRanking(ch);
-                    ch = rankingLevel.length; // exits the loop
-                } else if (unlockedLevel == rankingLevel[ch] && totalPoints == rankingPoints[ch] && name.equals(rankingName[ch])) {
-                    ch = rankingLevel.length; // exits the loop
-                }
-            }
-        }
-
-        if (rankingChanged) {
-            System.out.println("You have changed the ranking.");
-        } else {
-            System.out.println("Ranking not changed.");
-        }
-    }
-
-    public void addInRanking(int rpos) {
-        if (rankingLevel != null) {
-            for (int rch = 0; rch < rankingLevel.length; rch ++) {
-                if (name.equals(rankingName[rch])) {
-                    for (int pppos = rch; pppos < rankingLevel.length - 1; pppos++) {
-                        rankingName[pppos] = rankingName[pppos + 1];
-                        rankingLevel[pppos] = rankingLevel[pppos + 1];
-                        rankingPoints[pppos] = rankingPoints[pppos + 1];
-                    }
-                    rch = rankingLevel.length; // exits loop
-                }
-            }
-
-            for (int ppos = rankingLevel.length - 1; ppos > rpos; ppos --) {
-                rankingName[ppos] = rankingName[ppos - 1];
-                rankingLevel[ppos] = rankingLevel[ppos - 1];
-                rankingPoints[ppos] = rankingPoints[ppos - 1];
-            }
-            rankingName[rpos] = name;
-            rankingLevel[rpos] = unlockedLevel;
-            rankingPoints[rpos] = totalPoints;
-
-            convertRankingToString();
-        }
-    }
-
-    public void convertRankingToString() {
-        updatedRanking = "";
-        if (rankingLevel != null) {
-            for (int rk = 0; rk < rankingLevel.length; rk++) {
-                updatedRanking += rankingName[rk] + "," + rankingLevel[rk] + "," + rankingPoints[rk];
-                if (rk != rankingLevel.length - 1) {
-                    updatedRanking += ">";
-                }
-            }
-
-
-
-
-
-            setRankingReadyForUpload(true);
-        }
-    }
-
-    public void deleteNameFromRanking() {
-        if (rankingLevel != null) {
-            for (int ch = 0; ch < rankingLevel.length; ch++) {
-                if (unlockedLevel == rankingLevel[ch] && totalPoints == rankingPoints[ch] && name.equals(rankingName[ch])) {
-                    for (int pppos = ch; pppos < rankingLevel.length - 1; pppos++) {
-                        rankingName[pppos] = rankingName[pppos + 1];
-                        rankingLevel[pppos] = rankingLevel[pppos + 1];
-                        rankingPoints[pppos] = rankingPoints[pppos + 1];
-                    }
-                    rankingName[rankingName.length - 1] = "awesome robot";
-                    rankingLevel[rankingLevel.length - 1] = 1;
-                    rankingPoints[rankingPoints.length - 1] = 1;
-
-                    ch = rankingLevel.length; // exits the loop
-                }
-            }
-
-            convertRankingToString();
-        }
-    }
-
     // ui
 
     public void menuScreen() {
@@ -1614,191 +1450,26 @@ public class GameView extends View {
             menuBGColor = Color.HSVToColor(hsv);
             c.drawColor(menuBGColor);
 
-            if (rankingCapable) {
-                // square pattern
-                for (j = 0; j <= canvasHeight / menuScreenBlockSize; j ++) {
-                    for (i = 0; i < 24; i ++) {
-                        if (!(i > 19 && i < 23 && j > 0 && j < 4) && // close button area
-                                !(i > 3 && i < 10 && j > 23 && j < 30) && // play button area
-                                !(i > 13 && i < 20 && j > 23 && j < 30)) { // ranking button area
-                            c.drawRect(i * menuScreenBlockSize, j * menuScreenBlockSize, (i * menuScreenBlockSize) + menuScreenBlockSize, (j * menuScreenBlockSize) + menuScreenBlockSize, menuScreenBlockPaint);
-                        }
-                    }
-                }
-                // button stroke color
-                levelsButtonStrokePaint.setColor(0xffffffff);
-                // title
-                drawsSprite("menuTitle", menuTitleX, menuTitleY);
-                // buttons
-                drawsSprite("backIcon", rightIconX, menuScreenBlockSize);
-                c.drawRect(rightIconX, menuScreenBlockSize, rightIconX + backIconSize, menuScreenBlockSize + backIconSize, levelsButtonStrokePaint);
-                drawsSprite("menuPlayIcon", menuPlayIconX, menuPlayIconY);
-                c.drawRect(menuPlayIconX, menuPlayIconY, menuPlayIconX + menuPlayIconSize, menuPlayIconY + menuPlayIconSize, levelsButtonStrokePaint);
-                drawsSprite("menuRankingIcon", menuRankingIconX, menuRankingIconY);
-                c.drawRect(menuRankingIconX, menuRankingIconY, menuRankingIconX + menuPlayIconSize, menuRankingIconY + menuPlayIconSize, levelsButtonStrokePaint);
-            } else {
-                menuPlayIconX = (menuScreenBlockSize * 9) - (menuScreenBlockStrokeWidth / 2);
-                menuPlayIconY = (menuScreenBlockSize * 22) - (menuScreenBlockStrokeWidth / 2);
-                // square pattern
-                for (j = 0; j <= canvasHeight / menuScreenBlockSize; j ++) {
-                    for (i = 0; i < 24; i ++) {
-                        if (!(i > 19 && i < 23 && j > 0 && j < 4) && // close button area
-                                !(i > 8 && i < 15 && j > 25 && j < 32)) { // play button area
-                            c.drawRect(i * menuScreenBlockSize, j * menuScreenBlockSize, (i * menuScreenBlockSize) + menuScreenBlockSize, (j * menuScreenBlockSize) + menuScreenBlockSize, menuScreenBlockPaint);
-                        }
-                    }
-                }
-                // button stroke color
-                levelsButtonStrokePaint.setColor(0xffffffff);
-                // title
-                drawsSprite("menuTitle", menuTitleX, menuTitleY);
-                // buttons
-                drawsSprite("backIcon", rightIconX, menuScreenBlockSize);
-                c.drawRect(rightIconX, menuScreenBlockSize, rightIconX + backIconSize, menuScreenBlockSize + backIconSize, levelsButtonStrokePaint);
-                drawsSprite("menuPlayIcon", menuPlayIconX, menuPlayIconY + (4 * menuScreenBlockSize));
-                c.drawRect(menuPlayIconX, menuPlayIconY + (4 * menuScreenBlockSize), menuPlayIconX + menuPlayIconSize, menuPlayIconY + menuPlayIconSize + (4 * menuScreenBlockSize), levelsButtonStrokePaint);
-            }
-        }
-    }
-
-    public void preRankingScreen() {
-        if (c != null) {
-            // background color
-            hsv[0] = 360f / jjDiv * jj;
-            hsv[1] = 0.2f;
-            hsv[2] = 0.95f;
-            jj ++;
-            if (jj >= jjDiv) {
-                jj = 0;
-            }
-            menuBGColor = Color.HSVToColor(hsv);
-            c.drawColor(menuBGColor);
+            menuPlayIconX = (menuScreenBlockSize * 9) - (menuScreenBlockStrokeWidth / 2);
+            menuPlayIconY = (menuScreenBlockSize * 22) - (menuScreenBlockStrokeWidth / 2);
             // square pattern
             for (j = 0; j <= canvasHeight / menuScreenBlockSize; j ++) {
                 for (i = 0; i < 24; i ++) {
-                    if (!(i > 19 && i < 23 && j > 0 && j < 4)) { // && // close button area
-                        //!(i > 8 && i < 15 && j > 21 && j < 28) && // play button area
-                        //!(i > 8 && i < 15 && j > 31 && j < 38)) { // ranking button area
+                    if (!(i > 19 && i < 23 && j > 0 && j < 4) && // close button area
+                            !(i > 8 && i < 15 && j > 25 && j < 32)) { // play button area
                         c.drawRect(i * menuScreenBlockSize, j * menuScreenBlockSize, (i * menuScreenBlockSize) + menuScreenBlockSize, (j * menuScreenBlockSize) + menuScreenBlockSize, menuScreenBlockPaint);
                     }
                 }
             }
             // button stroke color
             levelsButtonStrokePaint.setColor(0xffffffff);
+            // title
+            drawsSprite("menuTitle", menuTitleX, menuTitleY);
             // buttons
             drawsSprite("backIcon", rightIconX, menuScreenBlockSize);
             c.drawRect(rightIconX, menuScreenBlockSize, rightIconX + backIconSize, menuScreenBlockSize + backIconSize, levelsButtonStrokePaint);
-
-            // ranking background
-            c.drawRect(2 * menuScreenBlockSize, 6 * menuScreenBlockSize, canvasWidth - (2 * menuScreenBlockSize), 12 * menuScreenBlockSize, gameBGPaint);
-
-            // ranking title
-            c.drawText("Ranking", 2 * menuScreenBlockSize, 4 * menuScreenBlockSize, rankingTitlePaint);
-
-            // enter name title
-            c.drawText("Please, enter your name:", 3 * menuScreenBlockSize, 8 * menuScreenBlockSize, rankingTop10Paint);
-            c.drawText(name + "_", 3 * menuScreenBlockSize, 10 * menuScreenBlockSize, rankingFirstRowPaint);
-
-            // button delete my name
-            c.drawRect((5 * menuScreenBlockSize) + shadowGap, (13 * menuScreenBlockSize) + shadowGap, (canvasWidth - (5 * menuScreenBlockSize)) + shadowGap, (17 * menuScreenBlockSize) + shadowGap, shadowPaint);
-            c.drawRect(5 * menuScreenBlockSize, 13 * menuScreenBlockSize, canvasWidth - (5 * menuScreenBlockSize), 17 * menuScreenBlockSize, dialogButtonFillPaint);
-            c.drawRect(5 * menuScreenBlockSize, 13 * menuScreenBlockSize, canvasWidth - (5 * menuScreenBlockSize), 17 * menuScreenBlockSize, dialogButtonStrokePaint);
-            c.drawText("name ok", 10 * menuScreenBlockSize, (15 * menuScreenBlockSize) + (menuScreenBlockSize / 3), dialogButtonTextPaint);
-
-            // agreement
-            c.drawText("by choosing a name, you agree on making", 2 * menuScreenBlockSize, 19 * menuScreenBlockSize, rankingInfoPaint);
-            c.drawText("your chosen name, level and points public", 2 * menuScreenBlockSize, (20 * menuScreenBlockSize) + (menuScreenBlockSize / 2), rankingInfoPaint);
-        }
-    }
-
-    public void rankingScreen() {
-        if (c != null) {
-            // background color
-            hsv[0] = 360f / jjDiv * jj;
-            hsv[1] = 0.2f;
-            hsv[2] = 0.95f;
-            jj ++;
-            if (jj >= jjDiv) {
-                jj = 0;
-            }
-            menuBGColor = Color.HSVToColor(hsv);
-            c.drawColor(menuBGColor);
-            // square pattern
-            for (j = 0; j <= canvasHeight / menuScreenBlockSize; j ++) {
-                for (i = 0; i < 24; i ++) {
-                    if (!(i > 19 && i < 23 && j > 0 && j < 4)) { // close button area
-                        c.drawRect(i * menuScreenBlockSize, j * menuScreenBlockSize, (i * menuScreenBlockSize) + menuScreenBlockSize, (j * menuScreenBlockSize) + menuScreenBlockSize, menuScreenBlockPaint);
-                    }
-                }
-            }
-            // button stroke color
-            levelsButtonStrokePaint.setColor(0xffffffff);
-            // buttons
-            drawsSprite("backIcon", rightIconX, menuScreenBlockSize);
-            c.drawRect(rightIconX, menuScreenBlockSize, rightIconX + backIconSize, menuScreenBlockSize + backIconSize, levelsButtonStrokePaint);
-
-            // ranking background
-            c.drawRect(2 * menuScreenBlockSize, rankingBGTopY, canvasWidth - (2 * menuScreenBlockSize), rankingBGBottomY, gameBGPaint);
-
-            // ranking title
-            c.drawText("Ranking", 2 * menuScreenBlockSize, 4 * menuScreenBlockSize, rankingTitlePaint);
-
-            if (rankingDataAvailable && rankingLevel != null) {
-                // ranking first and second row
-                c.drawText("Top 10 players", 3 * menuScreenBlockSize, rankingBGTopY + (lineSpace * 2), rankingTop10Paint);
-                c.drawText("Pos", 3 * menuScreenBlockSize, rankingBGTopY + (lineSpace * 4), rankingFirstRowPaint);
-                c.drawText("Name", 5 * menuScreenBlockSize, rankingBGTopY + (lineSpace * 4), rankingFirstRowPaint);
-                c.drawText("Level", 14 * menuScreenBlockSize, rankingBGTopY + (lineSpace * 4), rankingFirstRowPaint);
-                c.drawText("Points", 18 * menuScreenBlockSize, rankingBGTopY + (lineSpace * 4), rankingFirstRowPaint);
-
-                // ranking values
-                for (int rkl = 0; rkl < 10; rkl ++) {
-                    if (rkl == 0) {
-                        c.drawText((rkl + 1) + "", 3 * menuScreenBlockSize, (rankingBGTopY + (lineSpace * 6)) + (rkl * 2 * lineSpace), ranking1stPaint);
-                        c.drawText(rankingName[rkl], 5 * menuScreenBlockSize, (rankingBGTopY + (lineSpace * 6)) + (rkl * 2 * lineSpace), ranking1stPaint);
-                        c.drawText(rankingLevel[rkl] + "", 14 * menuScreenBlockSize, (rankingBGTopY + (lineSpace * 6)) + (rkl * 2 * lineSpace), ranking1stPaint);
-                        c.drawText(rankingPoints[rkl] + "", 18 * menuScreenBlockSize, (rankingBGTopY + (lineSpace * 6)) + (rkl * 2 * lineSpace), ranking1stPaint);
-                    } else if (rkl == 1) {
-                        c.drawText((rkl + 1) + "", 3 * menuScreenBlockSize, (rankingBGTopY + (lineSpace * 6)) + (rkl * 2 * lineSpace), ranking2ndPaint);
-                        c.drawText(rankingName[rkl], 5 * menuScreenBlockSize, (rankingBGTopY + (lineSpace * 6)) + (rkl * 2 * lineSpace), ranking2ndPaint);
-                        c.drawText(rankingLevel[rkl] + "", 14 * menuScreenBlockSize, (rankingBGTopY + (lineSpace * 6)) + (rkl * 2 * lineSpace), ranking2ndPaint);
-                        c.drawText(rankingPoints[rkl] + "", 18 * menuScreenBlockSize, (rankingBGTopY + (lineSpace * 6)) + (rkl * 2 * lineSpace), ranking2ndPaint);
-                    } else if (rkl == 2) {
-                        c.drawText((rkl + 1) + "", 3 * menuScreenBlockSize, (rankingBGTopY + (lineSpace * 6)) + (rkl * 2 * lineSpace), ranking3rdPaint);
-                        c.drawText(rankingName[rkl], 5 * menuScreenBlockSize, (rankingBGTopY + (lineSpace * 6)) + (rkl * 2 * lineSpace), ranking3rdPaint);
-                        c.drawText(rankingLevel[rkl] + "", 14 * menuScreenBlockSize, (rankingBGTopY + (lineSpace * 6)) + (rkl * 2 * lineSpace), ranking3rdPaint);
-                        c.drawText(rankingPoints[rkl] + "", 18 * menuScreenBlockSize, (rankingBGTopY + (lineSpace * 6)) + (rkl * 2 * lineSpace), ranking3rdPaint);
-                    } else {
-                        c.drawText((rkl + 1) + "", 3 * menuScreenBlockSize, (rankingBGTopY + (lineSpace * 6)) + (rkl * 2 * lineSpace), rankingPaint);
-                        c.drawText(rankingName[rkl], 5 * menuScreenBlockSize, (rankingBGTopY + (lineSpace * 6)) + (rkl * 2 * lineSpace), rankingPaint);
-                        c.drawText(rankingLevel[rkl] + "", 14 * menuScreenBlockSize, (rankingBGTopY + (lineSpace * 6)) + (rkl * 2 * lineSpace), rankingPaint);
-                        c.drawText(rankingPoints[rkl] + "", 18 * menuScreenBlockSize, (rankingBGTopY + (lineSpace * 6)) + (rkl * 2 * lineSpace), rankingPaint);
-                    }
-                }
-            } else {
-                c.drawText("Ranking data is unavailable.", 3 * menuScreenBlockSize, 8 * menuScreenBlockSize, rankingTop10Paint);
-                c.drawText("Please, try again later.", 3 * menuScreenBlockSize, 11 * menuScreenBlockSize, rankingFirstRowPaint);
-            }
-
-            if (deleteConfirmation) {
-                // delete name confirmation
-                c.drawText("are you sure?", 9 * menuScreenBlockSize, rankingBGBottomY + (menuScreenBlockSize * 2) - (menuScreenBlockSize / 5), rankingInfoPaint);
-                c.drawRect(confButtonYesLeft + shadowGap, confButtonYesTop + shadowGap, confButtonYesRight + shadowGap, confButtonYesBottom + shadowGap, shadowPaint);
-                c.drawRect(confButtonYesLeft, confButtonYesTop, confButtonYesRight, confButtonYesBottom, dialogButtonFillPaint);
-                c.drawRect(confButtonYesLeft, confButtonYesTop, confButtonYesRight, confButtonYesBottom, dialogButtonStrokePaint);
-                c.drawText("yes", (6 * menuScreenBlockSize) + (menuScreenBlockSize / 7), rankingBGBottomY + (5 * menuScreenBlockSize) - (menuScreenBlockSize / 5), dialogButtonTextPaint);
-                c.drawRect(confButtonNoLeft + shadowGap, confButtonNoTop + shadowGap, confButtonNoRight + shadowGap, confButtonNoBottom + shadowGap, shadowPaint);
-                c.drawRect(confButtonNoLeft, confButtonNoTop, confButtonNoRight, confButtonNoBottom, dialogButtonFillPaint);
-                c.drawRect(confButtonNoLeft, confButtonNoTop, confButtonNoRight, confButtonNoBottom, dialogButtonStrokePaint);
-                c.drawText("no", (16 * menuScreenBlockSize) + (menuScreenBlockSize / 2), rankingBGBottomY + (5 * menuScreenBlockSize) - (menuScreenBlockSize / 6), dialogButtonTextPaint);
-            } else {
-                // button delete my name
-                c.drawRect((5 * menuScreenBlockSize) + shadowGap, (rankingBGBottomY + (2 * menuScreenBlockSize)) + shadowGap, (canvasWidth - (5 * menuScreenBlockSize)) + shadowGap, (rankingBGBottomY + (6 * menuScreenBlockSize)) + shadowGap, shadowPaint);
-                c.drawRect(5 * menuScreenBlockSize, rankingBGBottomY + (2 * menuScreenBlockSize), canvasWidth - (5 * menuScreenBlockSize), rankingBGBottomY + (6 * menuScreenBlockSize), dialogButtonFillPaint);
-                c.drawRect(5 * menuScreenBlockSize, rankingBGBottomY + (2 * menuScreenBlockSize), canvasWidth - (5 * menuScreenBlockSize), rankingBGBottomY + (6 * menuScreenBlockSize), dialogButtonStrokePaint);
-                c.drawText("delete my name", (8 * menuScreenBlockSize) + (menuScreenBlockSize / 4), rankingBGBottomY + (4 * menuScreenBlockSize) + (menuScreenBlockSize / 3), dialogButtonTextPaint);
-
-            }
+            drawsSprite("menuPlayIcon", menuPlayIconX, menuPlayIconY + (4 * menuScreenBlockSize));
+            c.drawRect(menuPlayIconX, menuPlayIconY + (4 * menuScreenBlockSize), menuPlayIconX + menuPlayIconSize, menuPlayIconY + menuPlayIconSize + (4 * menuScreenBlockSize), levelsButtonStrokePaint);
         }
     }
 
@@ -2687,184 +2358,37 @@ public class GameView extends View {
     // handles input
 
     public void handlesMenuTouch() {
-        if (rankingCapable) {
-            switch (action) {
-                case "down":
-                    touchGrabTime = System.currentTimeMillis();
-                    if (touchX > menuPlayIconX &&
-                            touchX < menuPlayIconX + menuPlayIconSize &&
-                            touchY > menuPlayIconY &&
-                            touchY < menuPlayIconY + menuPlayIconSize) {
-                        touchGrab = true;
-                    } else if (touchX > menuRankingIconX &&
-                            touchX < menuRankingIconX + menuPlayIconSize &&
-                            touchY > menuRankingIconY &&
-                            touchY < menuRankingIconY + menuPlayIconSize) {
-                        touchGrab = true;
-                    } else if (touchX > canvasWidth - menuScreenBlockSize - backIconSize &&
-                            touchY < menuScreenBlockSize + backIconSize) {
-                        touchGrab = true;
-                    } else if (touchX < leftIconX + backIconSize &&
-                            touchY < menuScreenBlockSize + backIconSize) {
-                        touchGrab = true;
-                    }
-                    break;
-                case "move":
-                    if (touchX > menuPlayIconX &&
-                            touchX < menuPlayIconX + menuPlayIconSize &&
-                            touchY > menuPlayIconY &&
-                            touchY < menuPlayIconY + menuPlayIconSize) {
-                        if (System.currentTimeMillis() - touchGrabTime >= touchGrabGap) {
-                            touchGrab = true;
-                        }
-                    } else if (touchX > menuRankingIconX &&
-                            touchX < menuRankingIconX + menuPlayIconSize &&
-                            touchY > menuRankingIconY &&
-                            touchY < menuRankingIconY + menuPlayIconSize) {
-                        if (System.currentTimeMillis() - touchGrabTime >= touchGrabGap) {
-                            touchGrab = true;
-                        }
-                    } else if (touchX > canvasWidth - menuScreenBlockSize - backIconSize &&
-                            touchY < menuScreenBlockSize + backIconSize) {
-                        if (System.currentTimeMillis() - touchGrabTime >= touchGrabGap) {
-                            touchGrab = true;
-                        }
-                    } else if (touchX < leftIconX + backIconSize &&
-                            touchY < menuScreenBlockSize + backIconSize) {
-                        if (System.currentTimeMillis() - touchGrabTime >= touchGrabGap) {
-                            touchGrab = true;
-                        }
-                    } else {
-                        touchGrab = false;
-                        touchGrabTime = System.currentTimeMillis();
-                    }
-                    break;
-                case "up":
-                    if (touchX > menuPlayIconX &&
-                            touchX < menuPlayIconX + menuPlayIconSize &&
-                            touchY > menuPlayIconY &&
-                            touchY < menuPlayIconY + menuPlayIconSize &&
-                            touchGrab) {
-                        if (sound != null) {
-                            sound.play(soundPlim, 1, 1, 0, 0, 1);
-                        }
-                        action = "";
-                        centersUnlockedLevel();
-                        touchGrab = false;
-                        gameState = "levels";
-                    } else if (touchX > menuRankingIconX &&
-                            touchX < menuRankingIconX + menuPlayIconSize &&
-                            touchY > menuRankingIconY &&
-                            touchY < menuRankingIconY + menuPlayIconSize &&
-                            touchGrab) {
-                        if (sound != null) {
-                            sound.play(soundPlim, 1, 1, 0, 0, 1);
-                        }
-                        action = "";
-                        touchGrab = false;
-                        if (name.length() != 0) {
-                            checkRankingPosition();
-                            gameState = "ranking";
-                        } else {
-                            setShowsKeyboard(true);
-                            gameState = "preRanking";
-                        }
-                    } else if (touchX > canvasWidth - menuScreenBlockSize - backIconSize &&
-                            touchY < menuScreenBlockSize + backIconSize &&
-                            touchGrab) {
-                        touchGrab = false;
-                        sendBackPressed();
-                    }
-                    break;
-            }
-        } else {
-            switch (action) {
-                case "down":
-                    touchGrabTime = System.currentTimeMillis();
-                    if (touchX > menuPlayIconX &&
-                            touchX < menuPlayIconX + menuPlayIconSize &&
-                            touchY > menuPlayIconY + (4 * menuScreenBlockSize) &&
-                            touchY < menuPlayIconY + menuPlayIconSize + (4 * menuScreenBlockSize)) {
-                        touchGrab = true;
-                    } else if (touchX > canvasWidth - menuScreenBlockSize - backIconSize &&
-                            touchY < menuScreenBlockSize + backIconSize) {
-                        touchGrab = true;
-                    } else if (touchX < leftIconX + backIconSize &&
-                            touchY < menuScreenBlockSize + backIconSize) {
-                        touchGrab = true;
-                    }
-                    break;
-                case "move":
-                    if (touchX > menuPlayIconX &&
-                            touchX < menuPlayIconX + menuPlayIconSize &&
-                            touchY > menuPlayIconY + (4 * menuScreenBlockSize) &&
-                            touchY < menuPlayIconY + menuPlayIconSize + (4 * menuScreenBlockSize)) {
-                        if (System.currentTimeMillis() - touchGrabTime >= touchGrabGap) {
-                            touchGrab = true;
-                        }
-                    } else if (touchX > canvasWidth - menuScreenBlockSize - backIconSize &&
-                            touchY < menuScreenBlockSize + backIconSize) {
-                        if (System.currentTimeMillis() - touchGrabTime >= touchGrabGap) {
-                            touchGrab = true;
-                        }
-                    } else if (touchX < leftIconX + backIconSize &&
-                            touchY < menuScreenBlockSize + backIconSize) {
-                        if (System.currentTimeMillis() - touchGrabTime >= touchGrabGap) {
-                            touchGrab = true;
-                        }
-                    } else {
-                        touchGrab = false;
-                        touchGrabTime = System.currentTimeMillis();
-                    }
-                    break;
-                case "up":
-                    if (touchX > menuPlayIconX &&
-                            touchX < menuPlayIconX + menuPlayIconSize &&
-                            touchY > menuPlayIconY + (4 * menuScreenBlockSize) &&
-                            touchY < menuPlayIconY + menuPlayIconSize + (4 * menuScreenBlockSize) &&
-                            touchGrab) {
-                        if (sound != null) {
-                            sound.play(soundPlim, 1, 1, 0, 0, 1);
-                        }
-                        action = "";
-                        centersUnlockedLevel();
-                        touchGrab = false;
-                        gameState = "levels";
-                    } else if (touchX > canvasWidth - menuScreenBlockSize - backIconSize &&
-                            touchY < menuScreenBlockSize + backIconSize &&
-                            touchGrab) {
-                        touchGrab = false;
-                        sendBackPressed();
-                    }
-                    break;
-            }
-        }
-    }
-
-    public void handlesPreRankingTouch() {
         switch (action) {
             case "down":
                 touchGrabTime = System.currentTimeMillis();
-                if (touchX > canvasWidth - menuScreenBlockSize - backIconSize &&
+                if (touchX > menuPlayIconX &&
+                        touchX < menuPlayIconX + menuPlayIconSize &&
+                        touchY > menuPlayIconY + (4 * menuScreenBlockSize) &&
+                        touchY < menuPlayIconY + menuPlayIconSize + (4 * menuScreenBlockSize)) {
+                    touchGrab = true;
+                } else if (touchX > canvasWidth - menuScreenBlockSize - backIconSize &&
                         touchY < menuScreenBlockSize + backIconSize) {
                     touchGrab = true;
-                } else if (touchX > 5 * menuScreenBlockSize &&
-                        touchX < canvasWidth - (5 * menuScreenBlockSize) &&
-                        touchY > 13 * menuScreenBlockSize &&
-                        touchY < 17 * menuScreenBlockSize) {
+                } else if (touchX < leftIconX + backIconSize &&
+                        touchY < menuScreenBlockSize + backIconSize) {
                     touchGrab = true;
                 }
                 break;
             case "move":
-                if (touchX > canvasWidth - menuScreenBlockSize - backIconSize &&
+                if (touchX > menuPlayIconX &&
+                        touchX < menuPlayIconX + menuPlayIconSize &&
+                        touchY > menuPlayIconY + (4 * menuScreenBlockSize) &&
+                        touchY < menuPlayIconY + menuPlayIconSize + (4 * menuScreenBlockSize)) {
+                    if (System.currentTimeMillis() - touchGrabTime >= touchGrabGap) {
+                        touchGrab = true;
+                    }
+                } else if (touchX > canvasWidth - menuScreenBlockSize - backIconSize &&
                         touchY < menuScreenBlockSize + backIconSize) {
                     if (System.currentTimeMillis() - touchGrabTime >= touchGrabGap) {
                         touchGrab = true;
                     }
-                } else if (touchX > 5 * menuScreenBlockSize &&
-                        touchX < canvasWidth - (5 * menuScreenBlockSize) &&
-                        touchY > 13 * menuScreenBlockSize &&
-                        touchY < 17 * menuScreenBlockSize) {
+                } else if (touchX < leftIconX + backIconSize &&
+                        touchY < menuScreenBlockSize + backIconSize) {
                     if (System.currentTimeMillis() - touchGrabTime >= touchGrabGap) {
                         touchGrab = true;
                     }
@@ -2874,132 +2398,22 @@ public class GameView extends View {
                 }
                 break;
             case "up":
-                if (touchX > canvasWidth - menuScreenBlockSize - backIconSize &&
-                        touchY < menuScreenBlockSize + backIconSize &&
+                if (touchX > menuPlayIconX &&
+                        touchX < menuPlayIconX + menuPlayIconSize &&
+                        touchY > menuPlayIconY + (4 * menuScreenBlockSize) &&
+                        touchY < menuPlayIconY + menuPlayIconSize + (4 * menuScreenBlockSize) &&
                         touchGrab) {
-                    touchGrab = false;
-                    sendBackPressed();
-                } else if (touchX > 5 * menuScreenBlockSize &&
-                        touchX < canvasWidth - (5 * menuScreenBlockSize) &&
-                        touchY > 13 * menuScreenBlockSize &&
-                        touchY < 17 * menuScreenBlockSize) {
-                    touchGrab = false;
                     if (sound != null) {
                         sound.play(soundPlim, 1, 1, 0, 0, 1);
                     }
                     action = "";
-                    if (name.length() != 0) {
-                        editor = sharedPref.edit();
-                        editor.putString("name", name);
-                        editor.apply();
-                        checkRankingPosition();
-                        hidesKeyboard = true;
-                        gameState = "ranking";
-                    }
-                }
-                break;
-        }
-    }
-
-    public void handlesRankingTouch() {
-        // TODO include yes no confirmation
-        switch (action) {
-            case "down":
-                touchGrabTime = System.currentTimeMillis();
-                if (touchX > canvasWidth - menuScreenBlockSize - backIconSize &&
-                        touchY < menuScreenBlockSize + backIconSize) {
-                    touchGrab = true;
-                } else if (touchX > 5 * menuScreenBlockSize &&
-                        touchX < canvasWidth - (5 * menuScreenBlockSize) &&
-                        touchY > rankingBGBottomY + (2 * menuScreenBlockSize) &&
-                        touchY < rankingBGBottomY + (6 * menuScreenBlockSize) &&
-                        !deleteConfirmation) {
-                    touchGrab = true;
-                } else if (touchX > confButtonYesLeft &&
-                        touchX < confButtonYesRight &&
-                        touchY > confButtonYesTop &&
-                        touchY < confButtonYesBottom &&
-                        deleteConfirmation) {
-                    touchGrab = true;
-                } else if (touchX > confButtonNoLeft &&
-                        touchX < confButtonNoRight &&
-                        touchY > confButtonNoTop &&
-                        touchY < confButtonNoBottom &&
-                        deleteConfirmation) {
-                    touchGrab = true;
-                }
-                break;
-            case "move":
-                if (touchX > canvasWidth - menuScreenBlockSize - backIconSize &&
-                        touchY < menuScreenBlockSize + backIconSize) {
-                    if (System.currentTimeMillis() - touchGrabTime >= touchGrabGap) {
-                        touchGrab = true;
-                    }
-                } else if (touchX > 5 * menuScreenBlockSize &&
-                        touchX < canvasWidth - (5 * menuScreenBlockSize) &&
-                        touchY > rankingBGBottomY + (2 * menuScreenBlockSize) &&
-                        touchY < rankingBGBottomY + (6 * menuScreenBlockSize) &&
-                        !deleteConfirmation) {
-                    if (System.currentTimeMillis() - touchGrabTime >= touchGrabGap) {
-                        touchGrab = true;
-                    }
-                } else if (touchX > confButtonYesLeft &&
-                        touchX < confButtonYesRight &&
-                        touchY > confButtonYesTop &&
-                        touchY < confButtonYesBottom &&
-                        deleteConfirmation) {
-                    if (System.currentTimeMillis() - touchGrabTime >= touchGrabGap) {
-                        touchGrab = true;
-                    }
-                } else if (touchX > confButtonNoLeft &&
-                        touchX < confButtonNoRight &&
-                        touchY > confButtonNoTop &&
-                        touchY < confButtonNoBottom &&
-                        deleteConfirmation) {
-                    if (System.currentTimeMillis() - touchGrabTime >= touchGrabGap) {
-                        touchGrab = true;
-                    }
-                } else {
+                    centersUnlockedLevel();
                     touchGrab = false;
-                    touchGrabTime = System.currentTimeMillis();
-                }
-                break;
-            case "up":
-                if (touchX > canvasWidth - menuScreenBlockSize - backIconSize &&
+                    gameState = "levels";
+                } else if (touchX > canvasWidth - menuScreenBlockSize - backIconSize &&
                         touchY < menuScreenBlockSize + backIconSize &&
                         touchGrab) {
                     touchGrab = false;
-                    action = "";
-                    sendBackPressed();
-                } else if (touchX > 5 * menuScreenBlockSize &&
-                        touchX < canvasWidth - (5 * menuScreenBlockSize) &&
-                        touchY > rankingBGBottomY + (2 * menuScreenBlockSize) &&
-                        touchY < rankingBGBottomY + (6 * menuScreenBlockSize) &&
-                        !deleteConfirmation) {
-                    touchGrab = false;
-                    action = "";
-                    deleteConfirmation = true;
-                } else if (touchX > confButtonYesLeft &&
-                        touchX < confButtonYesRight &&
-                        touchY > confButtonYesTop &&
-                        touchY < confButtonYesBottom &&
-                        deleteConfirmation) {
-                    touchGrab = false;
-                    action = "";
-                    deleteConfirmation = false;
-                    deleteNameFromRanking();
-                    name = "";
-                    editor = sharedPref.edit();
-                    editor.putString("name", name);
-                    editor.apply();
-                    sendBackPressed();
-                } else if (touchX > confButtonNoLeft &&
-                        touchX < confButtonNoRight &&
-                        touchY > confButtonNoTop &&
-                        touchY < confButtonNoBottom &&
-                        deleteConfirmation) {
-                    touchGrab = false;
-                    action = "";
                     sendBackPressed();
                 }
                 break;
@@ -3275,26 +2689,6 @@ public class GameView extends View {
                 }
                 System.exit(0);
                 break;
-            case "preRanking":
-                if (sound != null) {
-                    sound.play(soundPlim, 1, 1, 0, 0, 1);
-                }
-                action = "";
-                setHidesKeyboard(true);
-                gameState = "menu";
-                break;
-
-            case "ranking":
-                if (sound != null) {
-                    sound.play(soundPlim, 1, 1, 0, 0, 1);
-                }
-                action = "";
-                if (deleteConfirmation) {
-                    deleteConfirmation = false;
-                } else {
-                    gameState = "menu";
-                }
-                break;
             case "levels":
                 if (sound != null) {
                     sound.play(soundPlim, 1, 1, 0, 0, 1);
@@ -3349,90 +2743,12 @@ public class GameView extends View {
         this.interstitial = interstitial;
     }
 
-    public boolean getShowsKeyboard() {
-        return showsKeyboard;
-    }
-
-    public void setShowsKeyboard(boolean showsKeyboard) {
-        this.showsKeyboard = showsKeyboard;
-    }
-
-    public boolean getHidesKeyboard() {
-        return hidesKeyboard;
-    }
-
-    public void setHidesKeyboard(boolean hidesKeyboard) {
-        this.hidesKeyboard = hidesKeyboard;
-    }
-
     public boolean getFullScreen() {
         return fullScreen;
     }
 
     public void setFullScreen(boolean fullScreen) {
         this.fullScreen = fullScreen;
-    }
-
-    public void sendNameChar(int nc) {
-        if (nc == 1000) {
-            if (name.length() > 0) {
-                name = name.substring(0, name.length() - 1);
-            }
-        } else if (name.length() < 15) {
-            name += (char) nc;
-        }
-    }
-
-    public void blocksRanking() {
-        rankingCapable = false;
-    }
-
-    public void noRankingData() {
-        rankingDataAvailable = false;
-    }
-
-    public void processRankingData(String rankingData) {
-        rankingData = rankingData.replace(">","\n");
-
-        String[] lines = rankingData.split("\n");
-        rankingName = new String[lines.length];
-        rankingLevel = new int[lines.length];
-        rankingPoints = new int[lines.length];
-
-        String[] dividedLine;
-
-        for (int li = 0; li < lines.length; li ++) {
-            dividedLine = lines[li].split(",");
-            rankingName[li] = dividedLine[0];
-            try {
-                if (dividedLine.length > 1) {
-                    rankingLevel[li] = Integer.parseInt(dividedLine[1]);
-                }
-            } catch(NumberFormatException e) {
-                rankingLevel[li] = -1;
-                System.out.println("Could not parse " + e);
-            }
-            try {
-                if (dividedLine.length > 2) {
-                        rankingPoints[li] = Integer.parseInt(dividedLine[2]);
-                }
-            } catch(NumberFormatException e) {
-                rankingPoints[li] = -1;
-                System.out.println("Could not parse " + e);
-            }
-        }
-    }
-
-    public boolean getRankingReadyForUpload() {
-        return rankingReadyForUpload;
-    }
-
-    public void setRankingReadyForUpload(boolean rankingReadyForUpload) {
-        this.rankingReadyForUpload = rankingReadyForUpload;
-    }
-
-    public String getUpdatedRanking() {
-        return updatedRanking;
     }
 
     public void setAdPrefDialog(boolean adPrefDialog) {

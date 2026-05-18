@@ -110,9 +110,6 @@ public class MainActivity extends AppCompatActivity {
     private int loopingCycle = 400;
     private boolean rewarded = false;
     private InputMethodManager inputMethodManager;
-    private boolean rankingCapable = true;
-    private static final String RANKING_FILE = "https://onenice.monster/awesomerobot/blocks/ranking.blks";
-    private boolean rankingDataAvailable = true;
     private AudioManager audioManager;
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
@@ -177,6 +174,7 @@ public class MainActivity extends AppCompatActivity {
         mainLayout.addView(gameView);
         loadGameTextures();
 
+        /*
         try {
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
             StrictMode.setThreadPolicy(policy);
@@ -191,10 +189,7 @@ public class MainActivity extends AppCompatActivity {
             rankingCapable = false;
             System.out.println(TAG + "StrictMode.ThreadPolicy: " + e.getMessage());
         }
-
-        if (!isOnline) {
-            gameView.blocksRanking();
-        }
+        */
 
         audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
 
@@ -206,26 +201,6 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         looping.postDelayed(runnable, loopingCycle);
-
-        if (rankingCapable) {
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    String downloadedData = downloadRemoteTextFileContent();
-                    if (!TextUtils.isEmpty(downloadedData)) {
-                        saveDownloadedRankToFile(downloadedData);
-                        if (gameView != null) {
-                            gameView.processRankingData(downloadedData);
-                        }
-                    } else {
-                        rankingDataAvailable = false;
-                        System.out.println(TAG + "Ranking data unavailable. Try again later.");
-                    }
-
-                }
-            });
-        }
     }
 
     private void threadCycle() {
@@ -246,35 +221,11 @@ public class MainActivity extends AppCompatActivity {
                 gameView.setInterstitial(false);
                 showAdMobInterstitialAd();
             }
-            if (gameView.getShowsKeyboard()) {
-                gameView.setShowsKeyboard(false);
-                mainLayout.requestFocus();
-                inputMethodManager.showSoftInput(mainLayout, InputMethodManager.SHOW_FORCED);
-            }
-            if (gameView.getHidesKeyboard()) {
-                gameView.setHidesKeyboard(false);
-                inputMethodManager.hideSoftInputFromWindow(mainLayout.getWindowToken(), 0);
-                if (decorView != null) {
-                    Common.fullScreen(MainActivity.this, decorView);
-                }
-            }
             if (gameView.getFullScreen()) {
                 gameView.setFullScreen(false);
                 if (decorView != null) {
                     Common.fullScreen(MainActivity.this, decorView);
                 }
-            }
-            if (!rankingCapable) {
-                gameView.blocksRanking();
-                rankingCapable = true;
-            }
-            if (!rankingDataAvailable) {
-                rankingDataAvailable = true;
-                gameView.noRankingData();
-            }
-            if (gameView.getRankingReadyForUpload()) {
-                gameView.setRankingReadyForUpload(false);
-                processUpdatedRanking(gameView.getUpdatedRanking());
             }
         }
     }
@@ -675,141 +626,6 @@ public class MainActivity extends AppCompatActivity {
         return isAvailable;
     }
 
-    private String downloadRemoteTextFileContent() {
-        URL mUrl = null;
-        String content = "";
-        if (isOnline) {
-            try {
-                mUrl = new URL(RANKING_FILE);
-            } catch (MalformedURLException e) {
-                System.out.println(TAG + "mUrl = new URL(RANKING_FILE): " + e.getMessage());
-            }
-
-            try {
-                assert mUrl != null;
-                URLConnection connection = mUrl.openConnection();
-                BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String line = "";
-                while((line = br.readLine()) != null){
-                    content += line;
-                }
-                br.close();
-                System.out.println(TAG + "Rank: " + content);
-            } catch (IOException e) {
-                System.out.println(TAG + "downloadRemoteTextFileContent: " + e.getMessage());
-            }
-        }
-        return content;
-    }
-
-    private void processUpdatedRanking(String updatedRanking) {
-        saveDownloadedRankToFile(updatedRanking);
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                uploadRankFile();
-            }
-        });
-    }
-
-    public int uploadRankFile() {
-        String selectedFilePath = cachePath + "/ranking.blks";
-
-        int serverResponseCode = 0;
-
-        HttpURLConnection connection;
-        DataOutputStream dataOutputStream = null;
-        String lineEnd = "\r\n";
-        String twoHyphens = "--";
-        String boundary = "**blocks**";
-
-        int bytesRead, bytesAvailable, bufferSize;
-        byte[] buffer;
-        int maxBufferSize = 1 * 1024 * 1024;
-        File selectedFile = new File(selectedFilePath);
-
-        String[] parts = selectedFilePath.split("/");
-        final String fileName = parts[parts.length-1];
-
-        if (!selectedFile.isFile()){
-            System.out.println(TAG + "file does not exist");
-            return 0;
-        } else {
-            FileInputStream fileInputStream = null;
-            try {
-                fileInputStream = new FileInputStream(selectedFile);
-                URL url = new URL("https://onenice.monster/awesomerobot/blocks/upload_file.php");
-
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setDoInput(true);
-                connection.setDoOutput(true);
-                connection.setUseCaches(false);
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Connection", "Keep-Alive");
-                connection.setRequestProperty("ENCTYPE", "multipart/form-data");
-                connection.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
-                connection.setRequestProperty("uploaded_file", selectedFilePath);
-
-                dataOutputStream = new DataOutputStream(connection.getOutputStream());
-                dataOutputStream.writeBytes(twoHyphens + boundary + lineEnd);
-                dataOutputStream.writeBytes("Content-Disposition: form-data; name=\"uploaded_file\";filename=\"" + selectedFilePath + "\"" + lineEnd);
-                dataOutputStream.writeBytes(lineEnd);
-
-                bytesAvailable = fileInputStream.available();
-                bufferSize = Math.min(bytesAvailable,maxBufferSize);
-                buffer = new byte[bufferSize];
-
-                bytesRead = fileInputStream.read(buffer,0,bufferSize);
-
-                while (bytesRead > 0){
-                    dataOutputStream.write(buffer,0,bufferSize);
-                    bytesAvailable = fileInputStream.available();
-                    bufferSize = Math.min(bytesAvailable,maxBufferSize);
-                    bytesRead = fileInputStream.read(buffer,0,bufferSize);
-                }
-
-                dataOutputStream.writeBytes(lineEnd);
-                dataOutputStream.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
-
-                serverResponseCode = connection.getResponseCode();
-                String serverResponseMessage = connection.getResponseMessage();
-
-                System.out.println(TAG + "server response: " + serverResponseMessage + " - code: " + serverResponseCode);
-                if (serverResponseCode == 200){
-                    System.out.println(TAG + "file upload completed: " + fileName);
-                }
-
-                // get php response
-                InputStream is = connection.getInputStream();
-                BufferedReader rd = new BufferedReader(new InputStreamReader(is));
-                String line;
-                while((line = rd.readLine()) != null) {
-                    System.out.println(TAG + "PHP response: " + line);
-                }
-                rd.close();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-                System.out.println(TAG + "file not found");
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                System.out.println(TAG + "url error");
-            } catch (IOException e) {
-                e.printStackTrace();
-                System.out.println(TAG + "cannot read/write file");
-            } finally {
-                try {
-                    fileInputStream.close();
-                    dataOutputStream.flush();
-                    dataOutputStream.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            return serverResponseCode;
-        }
-    }
-
     // overrides
 
     @Override
@@ -839,12 +655,9 @@ public class MainActivity extends AppCompatActivity {
     public boolean dispatchKeyEvent(KeyEvent event) {
         int action = event.getAction();
         int keyCode = event.getKeyCode();
-        int pressedKey = event.getUnicodeChar();
 
         if (action == KeyEvent.ACTION_DOWN) {
-            if (keyCode == KeyEvent.KEYCODE_DEL) {
-                pressedKey = 1000;
-            } else if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (keyCode == KeyEvent.KEYCODE_BACK) {
                 if (gameView != null) {
                     gameView.sendBackPressed();
                 }
@@ -852,9 +665,6 @@ public class MainActivity extends AppCompatActivity {
                 audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI);
             } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
                 audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, AudioManager.FLAG_SHOW_UI);
-            }
-            if (pressedKey != 0 && pressedKey != 10 && gameView != null) {
-                gameView.sendNameChar(pressedKey);
             }
         }
 
