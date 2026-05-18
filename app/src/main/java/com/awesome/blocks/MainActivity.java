@@ -109,7 +109,6 @@ public class MainActivity extends AppCompatActivity {
     private Runnable runnable;
     private int loopingCycle = 400;
     private boolean rewarded = false;
-    private InputMethodManager inputMethodManager;
     private AudioManager audioManager;
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
@@ -123,13 +122,11 @@ public class MainActivity extends AppCompatActivity {
     private boolean adsVerbose = true;
     private ConsentInformation consentInformation;
     private AdView adMobBannerView;
-    private String moPubAdUnitId = "97e8ca2b87df445d9c37ae603dc321bb";
     private int adViewHeight = 0, bannerViewHeightDp = 0;
     private InterstitialAd adMobInterstitial;
     private String adMobInterstitialId = "ca-app-pub-8261651469212664/7899032281";
     private RewardedAd adMobRewarded;
-    private String adMobRewardedId = "ca-app-pub-8261651469212664/9737484293"; // real id
-    //private String adMobRewardedId = "ca-app-pub-3940256099942544/5224354917"; // test id
+    private String adMobRewardedId = "ca-app-pub-3940256099942544/5224354917";
     private boolean readyToSetAds = false, legalTextAlreadyCalled = false;
 
     private ImageView adBannerAR;
@@ -165,8 +162,6 @@ public class MainActivity extends AppCompatActivity {
 
         sharedPref = getSharedPreferences("com.awesome.blocks", Context.MODE_PRIVATE);
         isOnline = isNetworkAvailable();
-
-        prepareConnectionPermissions();
 
         setConnectivityListener();
 
@@ -539,29 +534,6 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    private void saveDownloadedRankToFile(String data) {
-        InputStream inputStream = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
-        OutputStream outputStream = null;
-        File file = new File(cachePath, "ranking.blks");
-        try {
-            outputStream = new FileOutputStream(file);
-            byte[] buf = new byte[1024];
-            int len;
-            while ((len = inputStream.read(buf)) > 0) {
-                outputStream.write(buf, 0, len);
-            }
-        } catch(Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                outputStream.close();
-                inputStream.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     // environment
 
     private long getFreeMemory() {
@@ -584,20 +556,7 @@ public class MainActivity extends AppCompatActivity {
         return 1;
     }
 
-    public static float pxToDp(int px, Context ctx) {
-        return px / ctx.getResources().getDisplayMetrics().density;
-    }
-
     // online stuff
-
-    public void prepareConnectionPermissions() {
-        try {
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     public void setConnectivityListener() {
         IntentFilter filter = new IntentFilter();
