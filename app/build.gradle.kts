@@ -10,8 +10,8 @@ android {
         applicationId = "com.awesome.blocks"
         minSdk = 24
         targetSdk = 36
-        versionCode = 175
-        versionName = "1.75"
+        versionCode = 176
+        versionName = "1.76"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

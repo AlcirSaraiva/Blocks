@@ -44,6 +44,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.android.gms.ads.rewarded.RewardItem;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
+import com.google.android.ump.ConsentDebugSettings;
 import com.google.android.ump.ConsentInformation;
 import com.google.android.ump.ConsentRequestParameters;
 import com.google.android.ump.UserMessagingPlatform;
@@ -77,9 +78,9 @@ public class MainActivity extends AppCompatActivity {
     private AdView adMobBannerView;
     private InterstitialAd adMobInterstitial;
     private RewardedAd adMobRewarded;
-    private String adMobBannerId = "ca-app-pub-3940256099942544/6300978111";
-    private String adMobInterstitialId = "ca-app-pub-8261651469212664/7899032281";
-    private String adMobRewardedId = "ca-app-pub-3940256099942544/5224354917";
+    private String adMobBannerId = "ca-app-pub-8261651469212664/2268281719"; // test id ca-app-pub-3940256099942544/6300978111
+    private String adMobInterstitialId = "ca-app-pub-8261651469212664/7899032281"; // test id ca-app-pub-3940256099942544/1033173712
+    private String adMobRewardedId = "ca-app-pub-8261651469212664/9737484293"; // test id ca-app-pub-3940256099942544/5224354917
     private boolean readyToSetAds = false, legalTextAlreadyCalled = false;
 
     @Override
@@ -247,8 +248,14 @@ public class MainActivity extends AppCompatActivity {
         if (legalTextAlreadyCalled) return;
         legalTextAlreadyCalled = true;
 
+        ConsentDebugSettings debugSettings = new ConsentDebugSettings.Builder(context)
+                .addTestDeviceHashedId("9543E8AA74711590DB5201C0EE961CB3")
+                .setDebugGeography(ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA)
+                .build();
+
         ConsentRequestParameters params = new ConsentRequestParameters.Builder()
                 .setTagForUnderAgeOfConsent(false)
+                .setConsentDebugSettings(debugSettings)
                 .build();
 
         consentInformation = UserMessagingPlatform.getConsentInformation(context);
