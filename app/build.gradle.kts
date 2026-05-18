@@ -42,5 +42,5 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
 
     implementation(libs.play.services.ads)
-    implementation(libs.consent.library)
+    implementation(libs.ump)
 }

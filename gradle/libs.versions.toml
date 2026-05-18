@@ -8,7 +8,7 @@ material = "1.14.0"
 activity = "1.13.0"
 constraintlayout = "2.2.1"
 playServicesAds = "25.2.0"
-consentLibrary = "1.0.8"
+ump = "4.0.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -18,8 +18,8 @@ appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "a
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
-consent-library = { module = "com.google.android.ads.consent:consent-library", version.ref = "consentLibrary" }
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
+ump = { module = "com.google.android.ump:user-messaging-platform", version.ref = "ump" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

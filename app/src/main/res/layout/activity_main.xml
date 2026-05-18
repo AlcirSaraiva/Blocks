@@ -1,42 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".MainActivity"
-    android:id="@+id/mainLayout">
+    tools:context=".MainActivity">
 
-    <RelativeLayout
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/adBannerRootView">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:id="@+id/mainLayout">
 
-        <ImageView
-            android:id="@+id/adBannerAR"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_alignParentTop="true"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ad_background" />
+            android:id="@+id/adBannerRootView">
 
-        <!--
-        real id
-        ads:adUnitId="ca-app-pub-8261651469212664/2268281719"
-        test id
-        ads:adUnitId="ca-app-pub-3940256099942544/6300978111"
-        -->
-        <com.google.android.gms.ads.AdView
-            xmlns:ads="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/adView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            ads:adUnitId="ca-app-pub-3940256099942544/6300978111"
-            ads:adSize="SMART_BANNER">
-        </com.google.android.gms.ads.AdView>
+            <ImageView
+                android:id="@+id/adBannerAR"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_alignParentTop="true"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ad_background" />
 
-    </RelativeLayout>
+            <FrameLayout
+                android:id="@+id/ad_view_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_alignParentTop="true" />
 
-</LinearLayout>
+        </RelativeLayout>
+
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/splashScreen"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/splashscreen"
+        android:visibility="visible"
+        android:clickable="true"
+        android:focusable="true" />
+
+</FrameLayout>

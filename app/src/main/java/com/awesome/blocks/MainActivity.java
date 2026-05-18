@@ -1,49 +1,35 @@
 package com.awesome.blocks;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.AsyncTask;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.StrictMode;
-import android.preference.PreferenceManager;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import android.text.SpannableString;
-import android.text.TextUtils;
-import android.text.method.LinkMovementMethod;
-import android.text.util.Linkify;
 import android.util.DisplayMetrics;
 import android.view.Display;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.ads.mediation.admob.AdMobAdapter;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
@@ -53,49 +39,14 @@ import com.google.android.gms.ads.FullScreenContentCallback;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.OnUserEarnedRewardListener;
-import com.google.android.gms.ads.RequestConfiguration;
-import com.google.android.gms.ads.initialization.AdapterStatus;
-import com.google.android.gms.ads.initialization.InitializationStatus;
-import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.android.gms.ads.interstitial.InterstitialAd;
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.android.gms.ads.rewarded.RewardItem;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
-import com.google.android.ump.ConsentForm;
 import com.google.android.ump.ConsentInformation;
 import com.google.android.ump.ConsentRequestParameters;
-import com.google.android.ump.FormError;
 import com.google.android.ump.UserMessagingPlatform;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.SocketException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.UnknownHostException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_G;
-import static com.google.android.gms.ads.RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE;
-import static com.google.android.gms.ads.RequestConfiguration.TAG_FOR_UNDER_AGE_OF_CONSENT_TRUE;
 
 public class MainActivity extends AppCompatActivity {
     private View decorView;
@@ -103,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
     private Activity activityContext;
     private LinearLayout mainLayout;
     private GameView gameView;
-    private BroadcastReceiver receiver;
+    private ConnectivityManager.NetworkCallback networkCallback;
     private boolean isOnline = false;
     private final Handler looping = new Handler();
     private Runnable runnable;
@@ -113,7 +64,6 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences sharedPref;
     private SharedPreferences.Editor editor;
     private int screenWidth, screenHeight;
-    private String cachePath;
     private String TAG = "AppTag: ";
 
     // ads
@@ -121,15 +71,16 @@ public class MainActivity extends AppCompatActivity {
     private boolean adsInitialized = false;
     private boolean adsVerbose = true;
     private ConsentInformation consentInformation;
+    private ImageView adBannerAR, splashScreen;
+    private int adViewHeight = 0;
+    private FrameLayout adContainerView;
     private AdView adMobBannerView;
-    private int adViewHeight = 0, bannerViewHeightDp = 0;
     private InterstitialAd adMobInterstitial;
-    private String adMobInterstitialId = "ca-app-pub-8261651469212664/7899032281";
     private RewardedAd adMobRewarded;
+    private String adMobBannerId = "ca-app-pub-3940256099942544/6300978111";
+    private String adMobInterstitialId = "ca-app-pub-8261651469212664/7899032281";
     private String adMobRewardedId = "ca-app-pub-3940256099942544/5224354917";
     private boolean readyToSetAds = false, legalTextAlreadyCalled = false;
-
-    private ImageView adBannerAR;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -142,7 +93,6 @@ public class MainActivity extends AppCompatActivity {
 
         context = this;
         activityContext = MainActivity.this;
-        cachePath = context.getExternalCacheDir().getAbsolutePath();
         decorView = this.getWindow().getDecorView();
 
         setContentView(R.layout.activity_main);
@@ -150,6 +100,14 @@ public class MainActivity extends AppCompatActivity {
         mainLayout.setFocusable(true);
         mainLayout.setFocusableInTouchMode(true);
         adBannerAR = findViewById(R.id.adBannerAR);
+        adContainerView = findViewById(R.id.ad_view_container);
+        splashScreen = findViewById(R.id.splashScreen);
+
+        new Handler().postDelayed(() -> {
+            if (splashScreen != null) {
+                splashScreen.setVisibility(View.GONE);
+            }
+        }, 3000);
 
         getScreenDimensions();
 
@@ -226,25 +184,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void getScreenDimensions() {
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        int currentOrientation = context.getResources().getConfiguration().orientation;
-        WindowManager wm = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE));
-        Display display = null;
-        try {
-            display = wm.getDefaultDisplay();
-        } catch (NullPointerException e) {
-            System.out.println(TAG + "wm.getDefaultDisplay: " + e.getMessage());
-        }
-
-        if (display != null) {
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            screenWidth = getWindowManager().getCurrentWindowMetrics().getBounds().width();
+            screenHeight = getWindowManager().getCurrentWindowMetrics().getBounds().height();
+        } else {
+            Display display = getWindowManager().getDefaultDisplay();
             Point screenSize = new Point();
             display.getRealSize(screenSize);
             screenWidth = screenSize.x;
             screenHeight = screenSize.y;
-        } else {
-            screenWidth = displayMetrics.widthPixels;
-            screenHeight = displayMetrics.heightPixels;
         }
 
         if (screenWidth > screenHeight) {
@@ -255,26 +204,12 @@ public class MainActivity extends AppCompatActivity {
 
         System.out.println(TAG + "Screen " + screenWidth + " x " + screenHeight + " pixels");
 
-        float screenHeightDp = screenHeight / displayMetrics.density;
+        // Adaptive banner
+        int adWidth = (int) (screenWidth / displayMetrics.density);
+        AdSize adSize = AdSize.getLargeAnchoredAdaptiveBannerAdSize(context, adWidth);
+        adViewHeight = adSize.getHeightInPixels(context);
 
-        System.out.println(TAG + "Screen height in dp " + screenHeightDp);
-
-        if (screenHeightDp <= 400) {
-            bannerViewHeightDp = 32;
-        } else if (screenHeightDp > 400 && screenHeightDp <= 720) {
-            bannerViewHeightDp = 50;
-        } else {
-            bannerViewHeightDp = 90;
-        }
-        adViewHeight = Math.round(bannerViewHeightDp * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
-
-        System.out.println(TAG + "Banner in dp " + bannerViewHeightDp);
-        System.out.println(TAG + "Banner in px " + adViewHeight);
-
-        if (AdSize.SMART_BANNER.getHeightInPixels(context) > adViewHeight) {
-            adViewHeight = AdSize.SMART_BANNER.getHeightInPixels(context);
-            System.out.println(TAG + "banner in px corrected " + adViewHeight);
-        }
+        System.out.println(TAG + "Large Adaptive Banner height in px " + adViewHeight);
     }
 
     private void loadGameTextures() {
@@ -309,61 +244,47 @@ public class MainActivity extends AppCompatActivity {
     // ads
 
     private void showLegalTextIfNeeded() {
-        if (!legalTextAlreadyCalled) {
-            legalTextAlreadyCalled = true;
-            ConsentRequestParameters params = new ConsentRequestParameters.Builder().build();
-            consentInformation = UserMessagingPlatform.getConsentInformation(context);
-            consentInformation.requestConsentInfoUpdate(activityContext, params,
-                    new ConsentInformation.OnConsentInfoUpdateSuccessListener() {
-                        @Override
-                        public void onConsentInfoUpdateSuccess() {
-                            UserMessagingPlatform.loadAndShowConsentFormIfRequired(activityContext,
-                                    (ConsentForm.OnConsentFormDismissedListener) loadAndShowError -> {
-                                        if (loadAndShowError != null) {
-                                            // Consent gathering failed.
-                                            System.out.println(TAG + loadAndShowError.getErrorCode() + ": " + loadAndShowError.getMessage());
-                                        }
-                                        System.out.println(TAG + "Consent has been gathered");
-                                        readyToSetAds = true;
-                                    });
-                        }
-                    },
-                    new ConsentInformation.OnConsentInfoUpdateFailureListener() {
-                        @Override
-                        public void onConsentInfoUpdateFailure(@NonNull FormError requestConsentError) {
-                            // Consent gathering failed.
-                            System.out.println(TAG + requestConsentError.getErrorCode() + ": " + requestConsentError.getMessage());
-                        }
-                    });
-        }
+        if (legalTextAlreadyCalled) return;
+        legalTextAlreadyCalled = true;
+
+        ConsentRequestParameters params = new ConsentRequestParameters.Builder()
+                .setTagForUnderAgeOfConsent(false)
+                .build();
+
+        consentInformation = UserMessagingPlatform.getConsentInformation(context);
+        consentInformation.requestConsentInfoUpdate(activityContext, params,
+                () -> UserMessagingPlatform.loadAndShowConsentFormIfRequired(activityContext,
+                        loadAndShowError -> {
+                            if (loadAndShowError != null) {
+                                System.out.println(TAG + "Consent form error: " + loadAndShowError.getMessage());
+                            }
+                            if (consentInformation.canRequestAds()) {
+                                initializeAds();
+                            }
+                        }),
+                requestConsentError -> {
+                    System.out.println(TAG + "Consent update error: " + requestConsentError.getMessage());
+                    if (consentInformation.canRequestAds()) {
+                        initializeAds();
+                    }
+                });
     }
 
     private void initializeAds() {
         if (!adsInitialized) {
-            // AdMob initialization
-            try {
-                if (adsVerbose) System.out.println(TAG + "Initializing ads...");
-                MobileAds.initialize(context, new OnInitializationCompleteListener() {
-                    @Override
-                    public void onInitializationComplete(InitializationStatus initializationStatus) {
-                        if (adsVerbose) System.out.println(TAG + "AdMob initialized");
-                        for (Map.Entry<String, AdapterStatus> entry : initializationStatus.getAdapterStatusMap().entrySet()) {
-                            if (adsVerbose) System.out.println(TAG + entry.getKey() + ": " + entry.getValue().getInitializationState());
-                        }
-                    }
-                });
-
-            } catch (Exception e) {
-                if (adsVerbose) System.out.println(TAG + "MobileAds.initialize: " + e.getMessage());
-            } finally {
-                adsInitialized = true;
-            }
+            adsInitialized = true;
+            if (adsVerbose) System.out.println(TAG + "Initializing ads...");
+            MobileAds.initialize(context, initializationStatus -> {
+                if (adsVerbose) System.out.println(TAG + "AdMob initialized");
+                runOnUiThread(() -> readyToSetAds = true);
+            });
         }
     }
 
     private void setAdMobAds() {
         if (!bannerAdLoaded) {
-            adMobBannerView = findViewById(R.id.adView);
+            adMobBannerView = new AdView(context);
+
             setAdMobBannerListener();
             loadAdMobBannerAd();
         }
@@ -399,6 +320,12 @@ public class MainActivity extends AppCompatActivity {
     private void loadAdMobBannerAd() {
         if (adMobBannerView != null) {
             try {
+                int adWidth = (int) (screenWidth / getResources().getDisplayMetrics().density);
+                AdSize adSize = AdSize.getLargeAnchoredAdaptiveBannerAdSize(context, adWidth);
+                adMobBannerView.setAdUnitId(adMobBannerId);
+                adMobBannerView.setAdSize(adSize);
+                adContainerView.removeAllViews();
+                adContainerView.addView(adMobBannerView);
                 adMobBannerView.loadAd(new AdRequest.Builder().build());
             } catch (Exception e) {
                 System.out.println(TAG + "loadAdMobBannerAd: " + e.getMessage());
@@ -559,30 +486,31 @@ public class MainActivity extends AppCompatActivity {
     // online stuff
 
     public void setConnectivityListener() {
-        IntentFilter filter = new IntentFilter();
-        filter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
-        receiver = new BroadcastReceiver() {
+        ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        networkCallback = new ConnectivityManager.NetworkCallback() {
             @Override
-            public void onReceive(Context cxt, Intent intent) {
-                isOnline = isNetworkAvailable();
-                if (isOnline) {
-                    showLegalTextIfNeeded();
-                    initializeAds();
-                }
+            public void onAvailable(@NonNull Network network) {
+                isOnline = true;
+                runOnUiThread(() -> showLegalTextIfNeeded());
+            }
+
+            @Override
+            public void onLost(@NonNull Network network) {
+                isOnline = false;
             }
         };
-        registerReceiver(receiver, filter);
+        manager.registerDefaultNetworkCallback(networkCallback);
     }
 
     private boolean isNetworkAvailable() {
         ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = manager.getActiveNetworkInfo();
-        boolean isAvailable = false;
-        if (networkInfo != null && networkInfo.isConnected()) {
-            // Network is present and connected
-            isAvailable = true;
-        }
-        return isAvailable;
+        Network nw = manager.getActiveNetwork();
+        if (nw == null) return false;
+        NetworkCapabilities actNw = manager.getNetworkCapabilities(nw);
+        return actNw != null && (actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                || actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+                || actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+                || actNw.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH));
     }
 
     // overrides
@@ -604,9 +532,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         try {
-            unregisterReceiver(receiver);
+            if (networkCallback != null) {
+                ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                manager.unregisterNetworkCallback(networkCallback);
+            }
         } catch (Exception e) {
-            System.out.println(TAG + "unregisterReceiver: " + e.getMessage());
+            System.out.println(TAG + "unregisterNetworkCallback: " + e.getMessage());
         }
     }
 
