@@ -4,14 +4,14 @@ plugins {
 
 android {
     namespace = "com.awesome.blocks"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.awesome.blocks"
         minSdk = 24
-        targetSdk = 34
-        versionCode = 170
-        versionName = "1.70"
+        targetSdk = 36
+        versionCode = 175
+        versionName = "1.75"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
