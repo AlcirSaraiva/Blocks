@@ -49,6 +49,8 @@ import com.google.android.ump.ConsentInformation;
 import com.google.android.ump.ConsentRequestParameters;
 import com.google.android.ump.UserMessagingPlatform;
 
+import com.awesome.blocks.AdsConfig;
+
 public class MainActivity extends AppCompatActivity {
     private View decorView;
     private Context context;
@@ -78,10 +80,18 @@ public class MainActivity extends AppCompatActivity {
     private AdView adMobBannerView;
     private InterstitialAd adMobInterstitial;
     private RewardedAd adMobRewarded;
-    private String adMobBannerId = "ca-app-pub-8261651469212664/2268281719"; // test id ca-app-pub-3940256099942544/6300978111
-    private String adMobInterstitialId = "ca-app-pub-8261651469212664/7899032281"; // test id ca-app-pub-3940256099942544/1033173712
-    private String adMobRewardedId = "ca-app-pub-8261651469212664/9737484293"; // test id ca-app-pub-3940256099942544/5224354917
     private boolean readyToSetAds = false, legalTextAlreadyCalled = false;
+
+    /*
+    AdsConfig.java
+    package com.awesome.blocks;
+
+    public class AdsConfig {
+        public static final String adMobBannerId = "ca-app-pub-XXXXX"; // test id ca-app-pub-3940256099942544/6300978111
+        public static final String adMobInterstitialId = "ca-app-pub-XXXXX"; // test id ca-app-pub-3940256099942544/1033173712
+        public static final String adMobRewardedId = "ca-app-pub-XXXXXX"; // test id ca-app-pub-3940256099942544/5224354917
+    }
+    */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -329,7 +339,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 int adWidth = (int) (screenWidth / getResources().getDisplayMetrics().density);
                 AdSize adSize = AdSize.getLargeAnchoredAdaptiveBannerAdSize(context, adWidth);
-                adMobBannerView.setAdUnitId(adMobBannerId);
+                adMobBannerView.setAdUnitId(AdsConfig.adMobBannerId);
                 adMobBannerView.setAdSize(adSize);
                 adContainerView.removeAllViews();
                 adContainerView.addView(adMobBannerView);
@@ -344,7 +354,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             AdRequest adRequest = new AdRequest.Builder().build();
 
-            InterstitialAd.load(context, adMobInterstitialId, adRequest, new InterstitialAdLoadCallback() {
+            InterstitialAd.load(context, AdsConfig.adMobInterstitialId, adRequest, new InterstitialAdLoadCallback() {
                 @Override
                 public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
                     adMobInterstitial = interstitialAd;
@@ -397,7 +407,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadAdMobRewardedAd() {
         AdRequest adRequest = new AdRequest.Builder().build();
-        RewardedAd.load(context, adMobRewardedId, adRequest, new RewardedAdLoadCallback() {
+        RewardedAd.load(context, AdsConfig.adMobRewardedId, adRequest, new RewardedAdLoadCallback() {
                     @Override
                     public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                         System.out.println(TAG + "RewardedAd.load: " + loadAdError.getMessage());
